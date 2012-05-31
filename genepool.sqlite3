@@ -1,0 +1,34 @@
+
+-- GenePool Genealogy Software
+
+create table if not exists person (
+    id integer primary key autoincrement,
+    name text not null,
+    gender char(1) check(gender = 'm' or gender = 'f'),
+    birthdate date,
+    birthplace text,
+    place_of_birth date,
+    place_of_death text,
+    comments text,
+    father integer not null,
+    mother integer not null,
+    constraint fk_person_father
+    foreign key(father) references person(id),
+    constraint fk_person_mother
+    foreign key(mother) references person(id)
+);    
+
+/*
+# -> ID
+# -> Name
+# -> Gender
+# -> DOB date  of birth
+# -> POB place of birth
+# -> DOD date  of death
+# -> POD place of death
+# -> Comments
+# -> Father => another person
+# -> Mother => another person
+*/
+
+

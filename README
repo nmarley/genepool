@@ -1,0 +1,36 @@
+genepool
+========
+
+GenePool - Perl Dancer app for tracking Genealogy
+
+
+=== NOTE/WARNING ===
+
+This is very immature software. It's my real first attempt at a Dancer
+application.
+
+
+=== INSTALL ===
+
+# First create the SQLite3 DB:
+sqlite3 genes.db < genepool.sqlite3
+
+# Then populate with some data
+# (feel free to add your own data to make it more relevant to you):
+./populate_db.pl 
+
+# Then start dancer
+./bin/app.pl
+
+
+=== TODO ===
+
+The only route currently written is "GET /get/:id", which fetches a Person object.
+This will probably be changed to "GET /person/:id", then other routes to
+add/modify Persons will be added.
+
+
+
+
+
+

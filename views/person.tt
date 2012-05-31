@@ -1,0 +1,40 @@
+
+<div id="page">
+
+      <div id="content">
+        <div id="header">
+          <h1><% person.name %></h1>
+        </div>
+
+        <ul>
+            <li>Place of birth: <% person.birthplace %></li>
+            <li>Birthdate: <% person.birthdate %></li>
+            <li>Gender: <% person.gender %></li>
+        </ul>
+
+        Parents: 
+        <ul>
+        <% FOREACH parent IN person.parents() %>
+        <li><a href="<% parent.id %>"><% parent.name %></a></li>
+        <% END %>
+        </ul>
+
+        Children: 
+        <ul>
+        <% FOREACH child IN person.children() %>
+        <li><a href="<% child.id %>"><% child.name %></a></li>
+        <% END %>
+        </ul>
+
+        Siblings: 
+        <ul>
+        <% FOREACH sib IN person.siblings() %>
+        <li><a href="<% sib.id %>"><% sib.name %></a></li>
+        <% END %>
+        </ul>
+
+    </div>
+
+</div>
+
+
