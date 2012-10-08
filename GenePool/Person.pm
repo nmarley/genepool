@@ -1,21 +1,26 @@
 package GenePool::Person;
 
-use Moose;
 use Carp;
 use Data::Dumper;
 use POSIX qw/strftime/;
 use Data::UUID;
+use YAML;
+use common::sense;
+use Moose;
+use Moose::Util::TypeConstraints;
 
 our @EXPORT_OK = qw( dbic_to_moose );
 
-# persistent storage for data
-# =============================================
-use lib './lib';
-use DBIC::GenePool;
-my $dsn = "dbi:SQLite:dbname=genes.db";
-my $schema = DBIC::GenePool->connect( $dsn,,,
-    {RaiseError => 1, AutoCommit => 1});
-# =============================================
+# ========================================================================
+my $config = YAML::LoadFile('config.yml');
+my $db = $config->{plugins}->{DBIC}->{default};
+my $sc = $db->{schema_class};
+eval qq{use $sc;};
+if ( $@ ) {
+    croak "Error: $@";
+}
+my $schema = $sc->connect($db->{dsn}, $db->{user}, $db->{pass} , $db->{options});
+# ========================================================================
 
 has 'id' => (
     is  => 'ro',
@@ -23,24 +28,41 @@ has 'id' => (
     writer => 'set_id'
 );
 
-has 'name' => (
-    is  => 'rw',
-    isa => 'Str',
-);
+for my $attr ( qw/name birthplace/ ) {
+    has $attr => (
+        is  => 'rw',
+        isa => 'Str',
+    );
+}
+
+#has 'name' => (
+#    is  => 'rw',
+#    isa => 'Str',
+#);
+
+subtype 'gendertype'
+    => as 'Str',
+    => where { /^(m|f)$/i },
+    => message {"Valid gender types are 'm' and 'f'"};
 
 has 'gender' => (
     is  => 'rw',
-    isa => 'Str',
+    isa => 'gendertype',
 );
 
-has 'birthplace' => (
-    is  => 'rw',
-    isa => 'Str',
-);
+#has 'birthplace' => (
+#    is  => 'rw',
+#    isa => 'Str',
+#);
+
+subtype 'date'
+    => as 'Str',
+    => where { /^\d{4}-\d{2}-\d{2}$/i },
+    => message {"Valid date format: YYYY-MM-DD"};
 
 has 'birthdate' => (
     is  => 'rw',
-    isa => 'Str',
+    isa => 'date',
 );
 
 has 'father' => (
@@ -55,6 +77,9 @@ has 'mother' => (
 
 sub BUILD {
     my $self = shift;
+
+    # don't use the ORIGIN
+    return if ( defined $self->id && $self->id == 0 );
 
     if ( !defined($self->name) ) {
         croak("Error! Person must have a name");
@@ -120,15 +145,7 @@ sub find {
     }
 
     return if (!defined($person));
-
-    my %new_attrs = map { $_ => $person->$_ } @attrs;
-    $new_attrs{father} = $person->father->id;
-    $new_attrs{mother} = $person->mother->id;
-
-    my $p = $class->new(%new_attrs);
-    $p->set_id($id);
-
-    return $p;
+    return dbic_to_moose($person);
 }
 
 
@@ -138,15 +155,13 @@ sub search {
 
     my @attrs = qw(name gender birthplace birthdate mother father);
 
-    for my $k (keys %$hr) {
-        delete $hr->{$k} if (!(grep { /$k/ } @attrs));
-    }
+    # filter non-attributes
+    $hr = { map { $_ => $hr->{$_} } grep { $hr->{$_} } @attrs };
 
     my $model = $schema->resultset('Person');
     my @people = $model->search( $hr )->all();
 
     my @results = map { dbic_to_moose($_) } @people;
-
     return @results;
 }
 
@@ -175,15 +190,16 @@ sub dbic_to_moose {
     my $person = shift;
     my $moose;
 
-    my @attrs = qw(name gender birthplace birthdate);
+    return if ( $person->id == 0 );
 
+    my @attrs = qw(name gender birthplace birthdate);
     my %new_attrs = map { $_ => $person->$_ } @attrs;
 
     $new_attrs{father} = $person->father->id;
     $new_attrs{mother} = $person->mother->id;
+
     $moose = __PACKAGE__->new(%new_attrs);
     $moose->set_id($person->id);
-
     return $moose;
 }
 
@@ -215,14 +231,7 @@ sub siblings {
         );
 
     my @siblings = $model->search( \%where )->all();
-
-    my @p;
-    for my $sib ( @siblings ) {
-        my $p = dbic_to_moose($sib);
-        push @p, $p;
-    }
-
-    return @p;
+    return map { dbic_to_moose($_) } @siblings;
 }
 
 
@@ -241,14 +250,7 @@ sub parents  {
         ( id => { -in => [ $person->father->id, $person->mother->id ] } );
 
     my @parents = $model->search( \%where )->all();
-
-    my @p;
-    for my $par ( @parents ) {
-        my $p = dbic_to_moose($par);
-        push @p, $p;
-    }
-
-    return @p;
+    return map { dbic_to_moose($_) } @parents;
 }
 
 
@@ -266,14 +268,7 @@ sub children {
     my @where = ( -or => [ {father => $person->id},
                            {mother => $person->id} ] );
     my @peeps = $model->search( \@where )->all();
-
-    my @p;
-    for my $pobj ( @peeps ) {
-        my $p = dbic_to_moose($pobj);
-        push @p, $p;
-    }
-
-    return @p;
+    return map { dbic_to_moose($_) } @peeps;
 }
 
 
@@ -316,6 +311,24 @@ sub dad {
     return $dad;
 }
 
+sub all {
+    my $class = shift;
+    return map { dbic_to_moose($_) } $schema->resultset('Person')->all;
+}
+
+sub umlaut {
+    my $class = shift;
+    #my $text = "Näthan Märley";
+    my $person = $class->find(2);
+    my $text = $person->birthplace;
+    return $text;
+}
+
+sub TO_JSON {
+    my $self = shift;
+    my @attrs = @{$self->meta->{_meta_instance}->{slots}};
+    return { map { $_ => $self->$_ } @attrs };
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

@@ -1,12 +1,12 @@
 use utf8;
-package DBIC::GenePool::Result::Person;
+package GenePool::DBIC::Result::Person;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-DBIC::GenePool::Result::Person
+GenePool::DBIC::Result::Person
 
 =cut
 
@@ -50,7 +50,7 @@ __PACKAGE__->table("person");
   data_type: 'text'
   is_nullable: 1
 
-=head2 place_of_birth
+=head2 date_of_death
 
   data_type: 'date'
   is_nullable: 1
@@ -90,7 +90,7 @@ __PACKAGE__->add_columns(
   { data_type => "date", is_nullable => 1 },
   "birthplace",
   { data_type => "text", is_nullable => 1 },
-  "place_of_birth",
+  "date_of_death",
   { data_type => "date", is_nullable => 1 },
   "place_of_death",
   { data_type => "text", is_nullable => 1 },
@@ -120,13 +120,13 @@ __PACKAGE__->set_primary_key("id");
 
 Type: belongs_to
 
-Related object: L<DBIC::GenePool::Result::Person>
+Related object: L<GenePool::DBIC::Result::Person>
 
 =cut
 
 __PACKAGE__->belongs_to(
   "father",
-  "DBIC::GenePool::Result::Person",
+  "GenePool::DBIC::Result::Person",
   { id => "father" },
   { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
 );
@@ -135,13 +135,13 @@ __PACKAGE__->belongs_to(
 
 Type: belongs_to
 
-Related object: L<DBIC::GenePool::Result::Person>
+Related object: L<GenePool::DBIC::Result::Person>
 
 =cut
 
 __PACKAGE__->belongs_to(
   "mother",
-  "DBIC::GenePool::Result::Person",
+  "GenePool::DBIC::Result::Person",
   { id => "mother" },
   { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
 );
@@ -150,13 +150,13 @@ __PACKAGE__->belongs_to(
 
 Type: has_many
 
-Related object: L<DBIC::GenePool::Result::Person>
+Related object: L<GenePool::DBIC::Result::Person>
 
 =cut
 
 __PACKAGE__->has_many(
   "person_fathers",
-  "DBIC::GenePool::Result::Person",
+  "GenePool::DBIC::Result::Person",
   { "foreign.father" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -165,20 +165,50 @@ __PACKAGE__->has_many(
 
 Type: has_many
 
-Related object: L<DBIC::GenePool::Result::Person>
+Related object: L<GenePool::DBIC::Result::Person>
 
 =cut
 
 __PACKAGE__->has_many(
   "person_mothers",
-  "DBIC::GenePool::Result::Person",
+  "GenePool::DBIC::Result::Person",
+  { "foreign.mother" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 personoldl_fathers
+
+Type: has_many
+
+Related object: L<GenePool::DBIC::Result::Personoldl>
+
+=cut
+
+__PACKAGE__->has_many(
+  "personoldl_fathers",
+  "GenePool::DBIC::Result::Personoldl",
+  { "foreign.father" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 personoldl_mothers
+
+Type: has_many
+
+Related object: L<GenePool::DBIC::Result::Personoldl>
+
+=cut
+
+__PACKAGE__->has_many(
+  "personoldl_mothers",
+  "GenePool::DBIC::Result::Personoldl",
   { "foreign.mother" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07024 @ 2012-05-23 10:32:42
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:DszKbcgNAIoOU7SZQulXig
+# Created by DBIx::Class::Schema::Loader v0.07025 @ 2012-10-03 19:43:41
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WDv2y6l8lLMZ5Mhsk2rpWA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

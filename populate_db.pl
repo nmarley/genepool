@@ -1,17 +1,13 @@
 #! /usr/bin/perl
 
-use strict;
-use warnings;
+use common::sense;
 use Data::Dumper;
 use File::Basename;
 use Carp;
 
-use lib './lib';
-use DBIC::GenePool;
+use GenePool::Person;
 
-my $dsn = "dbi:SQLite:dbname=genes.db";
-my $schema = DBIC::GenePool->connect( $dsn,,,
-    {RaiseError => 1, AutoCommit => 1});
+my $schema = $GenePool::Person::schema;
 
 $schema->populate('Person' => [
   [ 'name', 'gender', 'birthdate', 'birthplace', 'father', 'mother' ],

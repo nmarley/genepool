@@ -1,26 +1,37 @@
 package GenePool;
 
-use Dancer;
-
-use lib './lib';
+use common::sense;
+use Dancer ':syntax';
+use Data::Dumper;
 use GenePool::Person;
 
 our $VERSION = '0.1';
 
 get '/' => sub {
-    template 'index';
+    my @all = GenePool::Person->all();
+    template 'index', { people => \@all };
 };
 
 # TODO: display PERSON object via a 'card'
 # (this will mean wirting a style with TT in views,
 #  e.g. creating views/person.tt)
-get '/get/:id' => sub {
-    my $person = GenePool::Person->find(params->{id});
+get '/person/:id' => sub {
+    my $id = params->{id};
+    my $person = GenePool::Person->find($id);
+    debug "birthplace: [" . $person->birthplace . "]";
 
     return undef unless defined $person;
-    # $person->name;
-    template 'person', { person => $person };
 
+    debug "birthplace: [" . $person->birthplace . "]";
+
+    template 'person', { person => $person };
+};
+
+get '/umlaut' => sub {
+    #my $text = "This is söme tëxt";
+    my $text = GenePool::Person->umlaut();
+    template 'umlaut', { text => $text };
 };
 
 true;
+
